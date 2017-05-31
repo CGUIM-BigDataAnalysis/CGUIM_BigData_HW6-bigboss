@@ -1,62 +1,125 @@
 長庚大學 大數據分析方法 作業六
 ================
 
-作業說明 （繳交時請直接刪除這個章節）
--------------------------------------
-
-作業目的：期末專題暖身
-
-依下列指示，完成期末分析專題作業規劃：
-
--   訂出分析問題，並將R Markdown的一級標題(第一行的title:)中的"長庚大學 大數據分析方法 作業六"取代為期末專題的分析問題，並在分析議題背景前加上組員姓名 (`10pt`)
--   分析議題背景 (`10pt`) 與動機 (`10pt`)
--   資料說明 (`10pt`) 與 載入 (`10pt`)
--   資料處理與清洗 (`10pt`) 說明 (`10pt`)
--   對資料們進行探索式資料分析，圖文並茂佳!(`20pt`)
--   期末專題分析規劃與假設 (`10pt`)
+組員姓名：江昭輝
+----------------
 
 分析議題背景
 ------------
 
-背景介紹背景介紹
+分析空氣品質的差異是否會影響新北市民對YouBike的使用量
 
 分析動機
 --------
 
-分析動機分析動機
+常看到一些空氣品質的報導,想確認一般大眾是否會在意
 
 使用資料
 --------
 
-說明使用資料們
+1.「新北市YouBike從105年5月26日~106年3月31日的使用量」(XinBei\_YouBike\_UseData.csv) 2.「環境空氣品質的各種資料\_從104年8月到106年1月」(Environmental\_pollution\_InFo.csv)
 
 載入使用資料們
 
 ``` r
-#這是R Code Chunk
+library(readr)
 ```
+
+    ## Warning: package 'readr' was built under R version 3.3.3
+
+``` r
+XinBei_YouBike_UseData <- read_csv("C:/XinBei_YouBike_UseData.csv", 
+   col_names = FALSE,skip = 1)
+```
+
+    ## Parsed with column specification:
+    ## cols(
+    ##   .default = col_integer(),
+    ##   X1 = col_character(),
+    ##   X3 = col_character(),
+    ##   X36 = col_double(),
+    ##   X37 = col_double()
+    ## )
+
+    ## See spec(...) for full column specifications.
+
+``` r
+Environmental_pollution_InFo <- read_csv("C:/Environmental_pollution_InFo.csv")
+```
+
+    ## Parsed with column specification:
+    ## cols(
+    ##   ItemName = col_character(),
+    ##   Category = col_character(),
+    ##   Year = col_integer(),
+    ##   Month = col_integer(),
+    ##   ItemValue = col_character(),
+    ##   ItemUnit = col_character()
+    ## )
 
 資料處理與清洗
 --------------
 
-說明處理資料的步驟
+``` r
+library(dplyr)
+```
 
-處理資料
+    ## Warning: package 'dplyr' was built under R version 3.3.3
+
+    ## 
+    ## Attaching package: 'dplyr'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     filter, lag
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     intersect, setdiff, setequal, union
 
 ``` r
-#這是R Code Chunk
+library(data.table)
+```
+
+    ## -------------------------------------------------------------------------
+
+    ## data.table + dplyr code now lives in dtplyr.
+    ## Please library(dtplyr)!
+
+    ## -------------------------------------------------------------------------
+
+    ## 
+    ## Attaching package: 'data.table'
+
+    ## The following objects are masked from 'package:dplyr':
+    ## 
+    ##     between, first, last
+
+``` r
+#從「環境空氣品質的各種資料」中抽取所需要的欄位:空氣品質保護
+Needed_Environ_Info<-subset(Environmental_pollution_InFo,Category=="空氣品質保護")
+#把數值欄位中的"－"取代為0
+Needed_Environ_Info$ItemValue<-gsub("－",0,Needed_Environ_Info$ItemValue)
 ```
 
 探索式資料分析
 --------------
 
-圖文並茂圖文並茂
-
 ``` r
-#這是R Code Chunk
+#從「新北市YouBike從105年5月26日~106年3月31日的使用量」找出各租借點的出現次數
+DT1<-data.table(XinBei_YouBike_UseData)
+DT_XinBei_YouBike_UseData<-DT1[,.N,by=X3]
+#把ItemValue轉換成數值型態
+DT2<-data.table(Needed_Environ_Info)
+DT2$ItemValue<-as.numeric(DT2$ItemValue)
+#統計出各種空氣品質數據的月平均值
+Monthly_Mean<-group_by(DT2,Month,ItemName)%>%
+summarise(MonthlyMean=mean(ItemValue))
+#找出各種空氣品質數據的最大值
+MaxPolValue<-DT2[,.(MaxValue=max(ItemValue)),by=ItemName]
 ```
 
 期末專題分析規劃
 ----------------
 
-期末專題要做XXOOO交叉分析
+希望能找出空氣品質越糟糕YouBike租借量會越少的關係
